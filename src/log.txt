@@ -1,0 +1,94 @@
+mmand": "OFF"
+    },
+    {
+      "pin": 44,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 43,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 42,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 41,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 40,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 39,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 38,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 37,
+      "state": "OFF",
+      "command": "OFF"
+    }
+  ]
+} ************* Loop end ************* 
+Output JSON: 
+{
+  "output": [
+    {
+      "pin": 45,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 44,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 43,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 42,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 41,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 40,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 39,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 38,
+      "state": "OFF",
+      "command": "OFF"
+    },
+    {
+      "pin": 37,
+      "state": "OFF",
+      "command": "OFF"
+    }
+  ]
+} ************* Lo
