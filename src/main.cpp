@@ -1,6 +1,12 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include "pin.h"
 
+#ifndef ARDUINO_CPP
+#define ARDUINO_CPP
+// Define the device ID
+String ID = "EC-LB-100-5110-01";
+// Define the pin numbers to easily readable names
 #define OP1 45
 #define OP2 44
 #define OP3 43
@@ -23,77 +29,34 @@
 
 #define AI1 A1
 #define AI2 A2
+
+// Define the pin states based on pullup settings
 const int ON = LOW;
 const int OFF = HIGH;
 
-String OPSTATECOMMAND1 = "OFF";
-String OPSTATECOMMAND2 = "OFF";
-String OPSTATECOMMAND3 = "OFF";
-String OPSTATECOMMAND4 = "OFF";
-String OPSTATECOMMAND5 = "OFF";
+// Define the commands received from the server
 
-String OPSTATECOMMAND6 = "OFF";
-String OPSTATECOMMAND7 = "OFF";
-String OPSTATECOMMAND8 = "OFF";
-String OPSTATECOMMAND9 = "OFF";
+// Define the Pin class to hold the state of the pins
 
-String OPSTATE1 = "OFF";
-String OPSTATE2 = "OFF";
-String OPSTATE3 = "OFF";
-String OPSTATE4 = "OFF";
+Pin op1(OP1, "OP1", "OFF");
+Pin op2(OP2, "OP2", "OFF");
+Pin op3(OP3, "OP3", "OFF");
+Pin op4(OP4, "OP4", "OFF");
+Pin op5(OP5, "OP5", "OFF");
+Pin op6(OP6, "OP6", "OFF");
+Pin op7(OP7, "OP7", "OFF");
+Pin op8(OP8, "OP8", "OFF");
+Pin op9(OP9, "OP9", "OFF");
 
-String OPSTATE5 = "OFF";
-String OPSTATE6 = "OFF";
-String OPSTATE7 = "OFF";
-String OPSTATE8 = "OFF";
-String OPSTATE9 = "OFF";
-
-String IPSTATE1 = "OFF";
-String IPSTATE2 = "OFF";
-String IPSTATE3 = "OFF";
-String IPSTATE4 = "OFF";
-
-String IPSTATE5 = "OFF";
-String IPSTATE6 = "OFF";
-String IPSTATE7 = "OFF";
-String IPSTATE8 = "OFF";
-String IPSTATE9 = "OFF";
-
-class Pin
-{
-public:
-  int pinNumber;
-  String pinName;
-  String pinState;
-  String pinCommand;
-  Pin(int pinNumber, String pinName, String pinState, String pinCommand)
-  {
-    this->pinNumber = pinNumber;
-    this->pinName = pinName;
-    this->pinState = pinState;
-    this->pinCommand = pinCommand;
-  }
-};
-
-Pin op1(OP1, "OP1", OPSTATE1, OPSTATECOMMAND1);
-Pin op2(OP2, "OP2", OPSTATE2, OPSTATECOMMAND2);
-Pin op3(OP3, "OP3", OPSTATE3, OPSTATECOMMAND3);
-Pin op4(OP4, "OP4", OPSTATE4, OPSTATECOMMAND4);
-Pin op5(OP5, "OP5", OPSTATE5, OPSTATECOMMAND5);
-Pin op6(OP6, "OP6", OPSTATE6, OPSTATECOMMAND6);
-Pin op7(OP7, "OP7", OPSTATE7, OPSTATECOMMAND7);
-Pin op8(OP8, "OP8", OPSTATE8, OPSTATECOMMAND8);
-Pin op9(OP9, "OP9", OPSTATE9, OPSTATECOMMAND9);
-
-Pin ip1(IP1, "IP1", IPSTATE1, "");
-Pin ip2(IP2, "IP2", IPSTATE2, "");
-Pin ip3(IP3, "IP3", IPSTATE3, "");
-Pin ip4(IP4, "IP4", IPSTATE4, "");
-Pin ip5(IP5, "IP5", IPSTATE5, "");
-Pin ip6(IP6, "IP6", IPSTATE6, "");
-Pin ip7(IP7, "IP7", IPSTATE7, "");
-Pin ip8(IP8, "IP8", IPSTATE8, "");
-Pin ip9(IP9, "IP9", IPSTATE9, "");
+Pin ip1(IP1, "IP1", "OFF");
+Pin ip2(IP2, "IP2", "OFF");
+Pin ip3(IP3, "IP3", "OFF");
+Pin ip4(IP4, "IP4", "OFF");
+Pin ip5(IP5, "IP5", "OFF");
+Pin ip6(IP6, "IP6", "OFF");
+Pin ip7(IP7, "IP7", "OFF");
+Pin ip8(IP8, "IP8", "OFF");
+Pin ip9(IP9, "IP9", "OFF");
 
 // Define the array of output pins, output state, and output commands
 #define OPARRAYSIZE 9
@@ -104,25 +67,27 @@ Pin opArray[OPARRAYSIZE] = {op1, op2, op3, op4, op5, op6, op7, op8, op9};
 
 Pin ipArray[IPARRAYSIZE] = {ip1, ip2, ip3, ip4, ip5, ip6, ip7, ip8, ip9};
 
+#endif
+bool awaitingResponseFromServer = false;
+
+// -------------Setup Start----------------
 void setupDigitalPins()
 {
-
   for (int i = 0; i < OPARRAYSIZE; i++)
   {
     pinMode(opArray[i].pinNumber, OUTPUT);
   }
-
   for (int i = 0; i < IPARRAYSIZE; i++)
   {
     pinMode(ipArray[i].pinNumber, INPUT_PULLUP);
   }
 }
 
-void initDigitalOutputPins()
+void initDigitalPins()
 {
   for (int i = 0; i < OPARRAYSIZE; i++)
   {
-    digitalWrite(opArray[i].pinNumber, ON);
+    digitalWrite(opArray[i].pinNumber, OFF);
   }
   for (int i = 0; i < IPARRAYSIZE; i++)
   {
@@ -132,25 +97,22 @@ void initDigitalOutputPins()
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(9600);  // For debugging
+  Serial2.begin(9600); // For writing to Wifi chip which will be used to communicate with the server
+  Serial2.setTimeout(1000);
   pinMode(LED_BUILTIN, OUTPUT);
 
   setupDigitalPins();
-  initDigitalOutputPins();
+  initDigitalPins();
 }
+// -------------Setup End----------------
 
+// -------------Loop Start----------------
 void readDigitalOutput()
 {
   for (int i = 0; i < OPARRAYSIZE; i++)
   {
-    if (digitalRead(opArray[i].pinNumber) == ON)
-    {
-      opArray[i].pinState = "ON";
-    }
-    else
-    {
-      opArray[i].pinState = "OFF";
-    }
+    opArray[i].pinState = digitalRead(opArray[i].pinNumber) == ON ? "ON" : "OFF";
   }
 }
 
@@ -158,45 +120,146 @@ void readDigitalInput()
 {
   for (int i = 0; i < IPARRAYSIZE; i++)
   {
-    if (digitalRead(ipArray[i].pinNumber) == ON)
-    {
-      ipArray[i].pinState = "ON";
-    }
-    else
-    {
-      ipArray[i].pinState = "OFF";
-    }
+    ipArray[i].pinState = digitalRead(ipArray[i].pinNumber) == ON ? "ON" : "OFF";
   }
 }
 
-
-
-void createOutputJSON()
+String createOutputJSON()
 {
   // Create JSON
   JsonDocument doc;
-JsonDocument values;
-
-  for(int i = 0; i < OPARRAYSIZE; i++) {
+  JsonDocument values;
+  doc["ID"] = ID;
+  for (int i = 0; i < OPARRAYSIZE; i++)
+  {
     values[opArray[i].pinName] = opArray[i].pinState;
   }
   doc["values"] = values;
 
-  Serial.println("Output JSON: ");
-  serializeJsonPretty(doc, Serial);
+  String jsonString = "";
+  // Serial.println("Output JSON: ");
+  // serializeJsonPretty(doc, Serial);
+  serializeJson(doc, jsonString);
+  return jsonString;
 }
+
+int getValue(String command)
+{
+  if (command == "ON")
+  {
+    return ON;
+  }
+  else if (command == "OFF")
+  {
+    return OFF;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+void sendData(String jsonString)
+{
+
+  Serial.println("Sending JSON to server: " + jsonString);
+
+  // Send JSON to the server
+  Serial2.println(jsonString);
+  Serial2.flush();
+}
+
+void recieveCommands()
+{
+
+  if (Serial2.available())
+  {
+    JsonDocument doc;
+    String serialData = Serial2.readStringUntil('\n');
+    Serial.println("DATA FROM WIFI Chip: " + serialData);
+    if (serialData == "" || serialData == "\n" || serialData.indexOf("COMMAND") <= 0)
+    {
+      return;
+    }
+    DeserializationError error = deserializeJson(doc, serialData);
+    if (error)
+    {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.c_str());
+      return;
+    }
+    else
+    {
+
+      int flag1 = getValue(doc["OPCOMMAND1"].as<String>());
+      if (flag1 >= 0)
+      {
+        digitalWrite(op1.pinNumber, flag1);
+      }
+      int flag2 = getValue(doc["OPCOMMAND2"].as<String>());
+      if (flag2 >= 0)
+      {
+        digitalWrite(op2.pinNumber, flag2);
+      }
+      int flag3 = getValue(doc["OPCOMMAND3"].as<String>());
+      if (flag3 >= 0)
+      {
+        digitalWrite(op3.pinNumber, flag3);
+      }
+      int flag4 = getValue(doc["OPCOMMAND4"].as<String>());
+      if (flag4 >= 0)
+      {
+        digitalWrite(op4.pinNumber, flag4);
+      }
+      int flag5 = getValue(doc["OPCOMMAND5"].as<String>());
+      if (flag5 >= 0)
+      {
+        digitalWrite(op5.pinNumber, flag5);
+      }
+      int flag6 = getValue(doc["OPCOMMAND6"].as<String>());
+      if (flag6 >= 0)
+      {
+        digitalWrite(op6.pinNumber, flag6);
+      }
+      int flag7 = getValue(doc["OPCOMMAND7"].as<String>());
+      if (flag7 >= 0)
+      {
+        digitalWrite(op7.pinNumber, flag7);
+      }
+      int flag8 = getValue(doc["OPCOMMAND8"].as<String>());
+      if (flag8 >= 0)
+      {
+        digitalWrite(op8.pinNumber, flag8);
+      }
+      int flag9 = getValue(doc["OPCOMMAND9"].as<String>());
+      if (flag9 >= 0)
+      {
+        digitalWrite(op9.pinNumber, flag9);
+      }
+    }
+  }
+}
+String prevJSONString = "";
+unsigned long lastMeasure = 0;
+unsigned long now = 0;
 
 void loop()
 {
-  // digitalWrite(LED_BUILTIN, LOW);
-  readDigitalOutput();
-  // print Digital Output State;
-  // for (int i = 0; i < OPARRAYSIZE; i++) {
-  //   Serial.println("Output Pin: "+ String(opArray[i]) + " State: " + opStateArray[i]);
 
-  // }
-  // Sleep 1 second
-  delay(1000);
-  createOutputJSON();
+  recieveCommands();
+  delay(200);
+  readDigitalOutput();
+  String jsonString = createOutputJSON();
+  now = millis();
+  // Publishes new temperature and humidity every 5 seconds
+
+  if (jsonString == prevJSONString && now - lastMeasure < 5000)
+  {
+    return;
+  }
+  lastMeasure = now;
+  sendData(jsonString);
+  prevJSONString = jsonString;
+
   Serial.println(" ************* Loop end ************* ");
 }
