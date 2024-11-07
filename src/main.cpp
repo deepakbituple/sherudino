@@ -5,7 +5,7 @@
 #ifndef ARDUINO_CPP
 #define ARDUINO_CPP
 // Define the device ID
-String ID = "EC-LB-100-5110-01";
+String ID = "EC01";
 // Define the pin numbers to easily readable names
 #define OP1 45
 #define OP2 44
@@ -129,16 +129,15 @@ String createOutputJSON()
   // Create JSON
   JsonDocument doc;
   JsonDocument values;
-  doc["ID"] = ID;
+
   for (int i = 0; i < OPARRAYSIZE; i++)
   {
     values[opArray[i].pinName] = opArray[i].pinState;
   }
+  values["v"] = random(230, 240);
   doc["values"] = values;
 
   String jsonString = "";
-  // Serial.println("Output JSON: ");
-  // serializeJsonPretty(doc, Serial);
   serializeJson(doc, jsonString);
   return jsonString;
 }
@@ -162,7 +161,7 @@ int getValue(String command)
 void sendData(String jsonString)
 {
 
-  Serial.println("Sending JSON to server: " + jsonString);
+  // Serial.println("Sending JSON to server: " + jsonString);
 
   // Send JSON to the server
   Serial2.println(jsonString);
@@ -177,7 +176,7 @@ void recieveCommands()
     JsonDocument doc;
     String serialData = Serial2.readStringUntil('\n');
     Serial.println("DATA FROM WIFI Chip: " + serialData);
-    if (serialData == "" || serialData == "\n" || serialData.indexOf("COMMAND") <= 0)
+    if (serialData == "" || serialData == "\n" || serialData.indexOf("debug:") >= 0)
     {
       return;
     }
@@ -191,47 +190,47 @@ void recieveCommands()
     else
     {
 
-      int flag1 = getValue(doc["OPCOMMAND1"].as<String>());
+      int flag1 = getValue(doc["OP1"].as<String>());
       if (flag1 >= 0)
       {
         digitalWrite(op1.pinNumber, flag1);
       }
-      int flag2 = getValue(doc["OPCOMMAND2"].as<String>());
+      int flag2 = getValue(doc["OP2"].as<String>());
       if (flag2 >= 0)
       {
         digitalWrite(op2.pinNumber, flag2);
       }
-      int flag3 = getValue(doc["OPCOMMAND3"].as<String>());
+      int flag3 = getValue(doc["OP3"].as<String>());
       if (flag3 >= 0)
       {
         digitalWrite(op3.pinNumber, flag3);
       }
-      int flag4 = getValue(doc["OPCOMMAND4"].as<String>());
+      int flag4 = getValue(doc["OP4"].as<String>());
       if (flag4 >= 0)
       {
         digitalWrite(op4.pinNumber, flag4);
       }
-      int flag5 = getValue(doc["OPCOMMAND5"].as<String>());
+      int flag5 = getValue(doc["OP5"].as<String>());
       if (flag5 >= 0)
       {
         digitalWrite(op5.pinNumber, flag5);
       }
-      int flag6 = getValue(doc["OPCOMMAND6"].as<String>());
+      int flag6 = getValue(doc["OP6"].as<String>());
       if (flag6 >= 0)
       {
         digitalWrite(op6.pinNumber, flag6);
       }
-      int flag7 = getValue(doc["OPCOMMAND7"].as<String>());
+      int flag7 = getValue(doc["OP7"].as<String>());
       if (flag7 >= 0)
       {
         digitalWrite(op7.pinNumber, flag7);
       }
-      int flag8 = getValue(doc["OPCOMMAND8"].as<String>());
+      int flag8 = getValue(doc["OP8"].as<String>());
       if (flag8 >= 0)
       {
         digitalWrite(op8.pinNumber, flag8);
       }
-      int flag9 = getValue(doc["OPCOMMAND9"].as<String>());
+      int flag9 = getValue(doc["OP9"].as<String>());
       if (flag9 >= 0)
       {
         digitalWrite(op9.pinNumber, flag9);
@@ -247,7 +246,7 @@ void loop()
 {
 
   recieveCommands();
-  delay(200);
+  delay(500);
   readDigitalOutput();
   String jsonString = createOutputJSON();
   now = millis();
@@ -261,5 +260,5 @@ void loop()
   sendData(jsonString);
   prevJSONString = jsonString;
 
-  Serial.println(" ************* Loop end ************* ");
+  // Serial.println(" ************* Loop end ************* ");
 }
